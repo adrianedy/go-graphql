@@ -56,7 +56,7 @@ type Movie struct {
 	Runtime            int                `bson:"runtime,omitempty" json:"runtime,omitempty"`
 	Casts              []string           `bson:"casts,omitempty" json:"casts,omitempty"`
 	Num_mflix_comments int                `bson:"num_mflix_comments,omitempty" json:"num_mflix_comments,omitempty"`
-	Poster              string             `bson:"poster,omitempty" json:"poster,omitempty"`
+	Poster             string             `bson:"poster,omitempty" json:"poster,omitempty"`
 	Title              string             `bson:"title,omitempty" json:"title,omitempty"`
 	Fullplot           string             `bson:"fullplot,omitempty" json:"fullplot,omitempty"`
 	Countries          []string           `bson:"countries,omitempty" json:"countries,omitempty"`
@@ -247,8 +247,34 @@ var MoviesQuery = &graphql.Field{
 			Type:         graphql.Int,
 			DefaultValue: 10,
 		},
+		"countries": &graphql.ArgumentConfig{
+			Type: graphql.NewList(graphql.String),
+		},
+		"rated": &graphql.ArgumentConfig{
+			Type: graphql.String,
+		},
+		"languages": &graphql.ArgumentConfig{
+			Type: graphql.NewList(graphql.String),
+		},
 	},
 	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+		var filter bson.D
+		rated := p.Args["rated"].(string)
+		countries := p.Args["countries"].([]interface{})
+		languages := p.Args["languages"].([]interface{})
+
+		if rated != "" {
+			filter = append(filter, primitive.E{Key: "rated", Value: rated})
+		}
+
+		if len(countries) > 0 {
+			filter = append(filter, primitive.E{Key: "countries", Value: countries})
+		}
+
+		if len(languages) > 0 {
+			filter = append(filter, primitive.E{Key: "languages", Value: languages})
+		}
+
 		limitQuery, _ := p.Args["limit"].(int)
 		limit := int64(limitQuery)
 
@@ -257,7 +283,7 @@ var MoviesQuery = &graphql.Field{
 		}
 
 		var results []Movie
-		cur, _ := database.Collection(collectionName).Find(context.TODO(), bson.M{}, &opts)
+		cur, _ := database.Collection(collectionName).Find(context.TODO(), filter, &opts)
 
 		for cur.Next(context.TODO()) {
 			var movie Movie
