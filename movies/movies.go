@@ -248,20 +248,23 @@ var MoviesQuery = &graphql.Field{
 			DefaultValue: 10,
 		},
 		"countries": &graphql.ArgumentConfig{
-			Type: graphql.NewList(graphql.String),
+			Type:         graphql.NewList(graphql.String),
+			DefaultValue: make([]string, 0),
 		},
 		"rated": &graphql.ArgumentConfig{
-			Type: graphql.String,
+			Type:         graphql.String,
+			DefaultValue: "",
 		},
 		"languages": &graphql.ArgumentConfig{
-			Type: graphql.NewList(graphql.String),
+			Type:         graphql.NewList(graphql.String),
+			DefaultValue: make([]string, 0),
 		},
 	},
 	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-		var filter bson.D
+		filter := make(bson.D, 0)
 		rated := p.Args["rated"].(string)
-		countries := p.Args["countries"].([]interface{})
-		languages := p.Args["languages"].([]interface{})
+		countries := p.Args["countries"].([]string)
+		languages := p.Args["languages"].([]string)
 
 		if rated != "" {
 			filter = append(filter, primitive.E{Key: "rated", Value: rated})
